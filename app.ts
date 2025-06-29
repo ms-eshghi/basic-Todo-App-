@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import path from "path";
 import { promises as fs } from "fs";
+import { readFile, writeFile } from 'fs/promises';
 
 const app = express();
 const dataFile = path.join(__dirname, "data.json");
@@ -13,9 +14,12 @@ type TUser = {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../public")));
 
+import fsSync from "fs";
+console.log("Looking for HTML at:", path.join(__dirname, "../public/index.html"));
+console.log("File exists?", fsSync.existsSync(path.join(__dirname, "../public/index.html")));
 // In app.ts, before export:
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+res.sendFile(path.join(__dirname, "../public/index.html"));
 });
  
 const initializeDataFile = async () => {
@@ -49,11 +53,22 @@ app.post("/add", async (req: Request, res: Response) => {
   res.send(`Todo added successfully for user ${name}.`);
 });
 
-app.get("/todos/:id", async (req: Request, res: Response) => {
-  const users = await readData();
-  const user = users.find((u) => u.name === req.params.id);
-  if (!user) return res.status(404).send("User not found");
-  res.json(user.todos);
+const dataFilePath = path.join(__dirname, "data.json");
+app.get('/todos/:id', async (req, res) => {
+  try {
+    const data = await readFile(dataFilePath, 'utf-8');
+    const users: TUser[] = JSON.parse(data);
+    const user = users.find(u => u.name.toLowerCase() === req.params.id.toLowerCase());
+
+    if (user) {
+      res.json(user.todos);
+    } else {
+      console.warn("User not found:", req.params.id);
+      return res.status(404).send('User not found');
+    }
+  } catch (error) {
+     res.status(500).send('Server error');
+  }
 });
 
 app.delete("/delete", async (req: Request, res: Response) => {
@@ -70,7 +85,7 @@ app.put("/update", async (req: Request, res: Response) => {
   const { name, todo } = req.body;
   const users = await readData();
   const user = users.find((u) => u.name === name);
-  if (!user) return res.status(404).send("User not found");
+  if (!user || !todo) return res.status(404).send("User not found");
 
   user.todos = user.todos.filter((t) => t !== todo);
   await writeData(users);
