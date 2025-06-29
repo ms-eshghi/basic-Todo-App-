@@ -6,10 +6,12 @@ import { readFile, writeFile } from 'fs/promises';
 const app = express();
 const dataFile = path.join(__dirname, "data.json");
 
-type TUser = {
+export type TUser = {
   name: string;
   todos: string[];
 };
+
+const usersMap: Record<string, TUser> = {};
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../public")));
