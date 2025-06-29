@@ -4,7 +4,7 @@ import { promises as fs } from "fs";
 import { readFile, writeFile } from "fs/promises";
 
 const app = express();
-const dataFile = path.join(__dirname, "data.json");
+const dataFile = path.join(process.cwd(), "data.json");
 
 export type TUser = {
   name: string;
@@ -14,7 +14,7 @@ export type TUser = {
 const usersMap: Record<string, TUser> = {};
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static(path.join(__dirname, "../public/js")));
 
 import fsSync from "fs";
 console.log(
@@ -61,7 +61,7 @@ app.post("/add", async (req: Request, res: Response) => {
   res.send(`Todo added successfully for user ${name}.`);
 });
 
-const dataFilePath = path.join(__dirname, "data.json");
+const dataFilePath = path.join(process.cwd(), "data.json");
 app.get("/todos/:id", async (req, res) => {
   try {
     const data = await readFile(dataFilePath, "utf-8");
