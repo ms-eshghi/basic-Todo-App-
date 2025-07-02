@@ -40,16 +40,41 @@ document.getElementById("searchForm").addEventListener("submit", async (e) => {
     msg.textContent = `Todos for ${name}:`;
     document.getElementById("deleteUser").style.display = "inline";
 
-    todos.forEach(todo => {
-      const li = document.createElement("li");
-      const a = document.createElement("a");
-      a.href = "#";
-      a.className = "delete-task";
-      a.textContent = todo;
-      a.addEventListener("click", () => deleteTodo(todo));
-      li.appendChild(a);
-      ul.appendChild(li);
+todos.forEach(todo => {
+  const li = document.createElement("li");
+  const label = document.createElement("label");
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.className = "checkBoxes";
+  checkbox.checked = todo.checked;
+  checkbox.addEventListener("change", () => {
+    fetch("/updateTodo", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: currentUser,
+        todo: todo.todo,
+        checked: checkbox.checked
+      })
     });
+  });
+
+  const span = document.createElement("span");
+  const a = document.createElement("a");
+  a.href = "#";
+  a.textContent = todo.todo;
+  a.addEventListener("click", e => {
+    e.preventDefault();
+    deleteTodo(todo.todo);
+  });
+
+  span.appendChild(a);
+  label.appendChild(checkbox);
+  label.appendChild(span);
+  li.appendChild(label);
+  ul.appendChild(li);
+});
   } catch (err) {
     console.error("Error fetching todos:", err);
     msg.textContent = "Error fetching todos.";

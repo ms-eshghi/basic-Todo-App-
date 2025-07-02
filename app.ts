@@ -2,6 +2,8 @@ import express, { Request, Response } from "express";
 import path from "path";
 import { promises as fs } from "fs";
 import { readFile, writeFile } from "fs/promises";
+import { User } from "./src/models/User"; 
+
 
 const app = express();
 const dataFile = path.join(process.cwd(), "data.json");
@@ -47,38 +49,27 @@ const writeData = async (data: TUser[]) => {
   await fs.writeFile(dataFile, JSON.stringify(data, null, 2));
 };
 
-// All Routes
 app.post("/add", async (req: Request, res: Response) => {
   const { name, todo } = req.body;
   if (!name || !todo) return res.status(400).send("Name and todo required");
 
-  const users = await readData();
-  const user = users.find((u) => u.name === name);
-  if (user) user.todos.push(todo);
-  else users.push({ name, todos: [todo] });
+  let user = await User.findOne({ name });
 
-  await writeData(users);
+  if (!user) {
+    user = new User({ name, todos: [{ todo }] });
+  } else {
+    user.todos.push({ todo });
+  }
+
+  await user.save();
   res.send(`Todo added successfully for user ${name}.`);
 });
 
-const dataFilePath = path.join(process.cwd(), "data.json");
-app.get("/todos/:id", async (req, res) => {
-  try {
-    const data = await readFile(dataFilePath, "utf-8");
-    const users: TUser[] = JSON.parse(data);
-    const user = users.find(
-      (u) => u.name.toLowerCase() === req.params.id.toLowerCase()
-    );
 
-    if (user) {
-      res.json(user.todos);
-    } else {
-      console.warn("User not found:", req.params.id);
-      return res.status(404).send("User not found");
-    }
-  } catch (error) {
-    res.status(500).send("Server error");
-  }
+app.get("/todos/:id", async (req: Request, res: Response) => {
+  const user = await User.findOne({ name: req.params.id });
+  if (!user) return res.status(404).send("User not found");
+  res.json(user.todos);
 });
 
 app.delete("/delete", async (req: Request, res: Response) => {
@@ -94,21 +85,34 @@ app.delete("/delete", async (req: Request, res: Response) => {
 
 app.put("/update", async (req: Request, res: Response) => {
   const { name, todo } = req.body;
-  const users = await readData();
-  const user = users.find((u) => u.name === name);
-  if (!user || !todo) return res.status(404).send("User not found");
+  const user = await User.findOne({ name });
+  if (!user) return res.status(404).send("User not found");
 
-  const initialLength = user.todos.length;
-  user.todos = user.todos.filter((t) => t !== todo);
+  user.todos = user.todos.filter((t) => t.todo !== todo);
 
-  if (user.todos.length === initialLength) {
-    return res.status(404).send("Todo not found.");
+  if (user.todos.length === 0) {
+    await User.deleteOne({ name });
+  } else {
+    await user.save();
   }
 
-  await writeData(users);
+  app.put("/updateTodo", async (req: Request, res: Response) => {
+  const { name, todo, checked } = req.body;
+  const user = await User.findOne({ name });
+  if (!user) return res.status(404).send("User not found");
 
-  res.json(user.todos);
+  const t = user.todos.find(t => t.todo === todo);
+  if (!t) return res.status(404).send("Todo not found");
+
+  t.checked = checked;
+  await user.save();
+
+  res.send("Todo updated successfully.");
 });
+
+  res.send("Todo deleted successfully.");
+});
+
 
 // Export the app and file initializer
 export { app, initializeDataFile };

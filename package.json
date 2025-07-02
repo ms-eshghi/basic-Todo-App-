@@ -4,14 +4,15 @@
   "main": "app.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
- "start": "tsc-watch --onSuccess \"nodemon dist/src/index.js\"",
-     "build": "tsc"
+    "start": "tsc-watch --onSuccess \"nodemon dist/src/index.js\"",
+    "build": "tsc"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "express": "^4.21.2",
+    "mongoose": "^8.16.1",
     "morgan": "^1.10.0",
     "nodemon": "^3.1.9",
     "path": "^0.12.7",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
+    "@types/mongoose": "^5.11.96",
     "@types/node": "^22.13.14",
     "tsc-watch": "^7.1.1"
   }
