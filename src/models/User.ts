@@ -1,5 +1,4 @@
-// src/models/User.ts
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface ITodo {
   todo: string;
@@ -13,12 +12,12 @@ export interface IUser extends Document {
 
 const TodoSchema: Schema<ITodo> = new Schema({
   todo: { type: String, required: true },
-  checked: { type: Boolean, default: false }
+  checked: { type: Boolean, default: false },
 });
 
-const UserSchema: Schema<IUser> = new Schema({
+const UserSchema: Schema = new Schema({
   name: { type: String, required: true },
-  todos: [TodoSchema]
+  todos: [TodoSchema],
 });
 
 export const User = mongoose.model<IUser>("User", UserSchema);

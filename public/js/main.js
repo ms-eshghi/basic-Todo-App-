@@ -8,7 +8,7 @@ document.getElementById("todoForm").addEventListener("submit", async (e) => {
     const res = await fetch("/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, todo })
+      body: JSON.stringify({ name, todo }),
     });
     document.getElementById("message").textContent = await res.text();
   } catch (err) {
@@ -40,41 +40,35 @@ document.getElementById("searchForm").addEventListener("submit", async (e) => {
     msg.textContent = `Todos for ${name}:`;
     document.getElementById("deleteUser").style.display = "inline";
 
-todos.forEach(todo => {
-  const li = document.createElement("li");
-  const label = document.createElement("label");
+    todos.forEach((todo) => {
+      const li = document.createElement("li");
+      const label = document.createElement("label");
 
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.className = "checkBoxes";
-  checkbox.checked = todo.checked;
-  checkbox.addEventListener("change", () => {
-    fetch("/updateTodo", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: currentUser,
-        todo: todo.todo,
-        checked: checkbox.checked
-      })
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "checkBoxes";
+      checkbox.id = "myCheckbox";
+      checkbox.checked = todo.checked || false;
+      checkbox.addEventListener("change", () =>
+        updateChecked(todo.todo, checkbox.checked)
+      );
+
+      const span = document.createElement("span");
+      const a = document.createElement("a");
+      a.href = "#";
+      a.className = "delete-task";
+      a.textContent = todo.todo || todo;
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        deleteTodo(todo.todo || todo);
+      });
+
+      span.appendChild(a);
+      label.appendChild(checkbox);
+      label.appendChild(span);
+      li.appendChild(label);
+      ul.appendChild(li);
     });
-  });
-
-  const span = document.createElement("span");
-  const a = document.createElement("a");
-  a.href = "#";
-  a.textContent = todo.todo;
-  a.addEventListener("click", e => {
-    e.preventDefault();
-    deleteTodo(todo.todo);
-  });
-
-  span.appendChild(a);
-  label.appendChild(checkbox);
-  label.appendChild(span);
-  li.appendChild(label);
-  ul.appendChild(li);
-});
   } catch (err) {
     console.error("Error fetching todos:", err);
     msg.textContent = "Error fetching todos.";
@@ -88,7 +82,7 @@ document.getElementById("deleteUser").addEventListener("click", async () => {
     const res = await fetch("/delete", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: currentUser })
+      body: JSON.stringify({ name: currentUser }),
     });
     document.getElementById("message").textContent = await res.text();
     document.getElementById("todoList").innerHTML = "";
@@ -99,8 +93,24 @@ document.getElementById("deleteUser").addEventListener("click", async () => {
     document.getElementById("message").textContent = "Error deleting user.";
   }
 });
+async function updateChecked(todo, checked) {
+  if (!currentUser) return;
+  try {
+    const res = await fetch("/updateTodo", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: currentUser, todo, checked }),
+    });
 
-// Delete Single Todo Function 
+    const text = await res.text();
+    console.log("Checkbox update:", text);
+    document.getElementById("message").textContent = text;
+  } catch (err) {
+    console.error("Error updating checkbox:", err);
+  }
+}
+
+// Delete Single Todo Function
 async function deleteTodo(todo) {
   if (!currentUser) return;
   try {
@@ -108,7 +118,7 @@ async function deleteTodo(todo) {
     const res = await fetch("/update", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: currentUser, todo })
+      body: JSON.stringify({ name: currentUser, todo }),
     });
     const text = await res.text();
     console.log("Response text:", text);

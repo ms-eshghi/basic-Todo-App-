@@ -83,6 +83,21 @@ app.delete("/delete", async (req: Request, res: Response) => {
   res.send("User deleted successfully.");
 });
 
+app.put("/updateTodo", async (req: Request, res: Response) => {
+  const { name, todo, checked } = req.body;
+
+  const user = await User.findOne({ name });
+  if (!user) return res.status(404).send("User not found");
+
+  const t = user.todos.find((t) => t.todo === todo);
+  if (!t) return res.status(404).send("Todo not found");
+
+  t.checked = checked;
+  await user.save();
+
+  res.status(200).send("Todo updated successfully.");
+});
+
 app.put("/update", async (req: Request, res: Response) => {
   const { name, todo } = req.body;
   const user = await User.findOne({ name });
@@ -96,22 +111,9 @@ app.put("/update", async (req: Request, res: Response) => {
     await user.save();
   }
 
-  app.put("/updateTodo", async (req: Request, res: Response) => {
-  const { name, todo, checked } = req.body;
-  const user = await User.findOne({ name });
-  if (!user) return res.status(404).send("User not found");
-
-  const t = user.todos.find(t => t.todo === todo);
-  if (!t) return res.status(404).send("Todo not found");
-
-  t.checked = checked;
-  await user.save();
-
-  res.send("Todo updated successfully.");
-});
-
   res.send("Todo deleted successfully.");
 });
+
 
 
 // Export the app and file initializer
